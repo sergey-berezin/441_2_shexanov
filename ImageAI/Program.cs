@@ -1,5 +1,5 @@
-﻿using Path = System.IO.Path;
-using LibraryANN;
+﻿using LibraryANN;
+using Path = System.IO.Path;
 
 namespace YOLO_csharp
 {
@@ -19,6 +19,8 @@ namespace YOLO_csharp
 
             try
             {
+                objectDetection.SessionInitialization();
+
                 var listOfFileNames = ProcessFiles(args);
 
                 arrayOfTasks = new Task[listOfFileNames.Count];
@@ -44,20 +46,20 @@ namespace YOLO_csharp
         static async Task<List<ProcessedImageInfo>> ProcessFileAsync(string fileName, 
             CancellationTokenSource tokenSource, string csvFileName)
         {
-            var task = await objectDetection.StartTaskWithGetInfo(fileName, tokenSource.Token);
+            var task = await objectDetection.GetInfoAsync(fileName, tokenSource.Token);
             foreach (var item in task)
             {
                 item.SaveAsJpeg();
                 csvFileLock.Wait();
                 if (!File.Exists(csvFileName))
                     File.AppendAllLines(csvFileName, new List<string>() {
-                            $"{nameof(ProcessedImageInfo.fileName)}, " +
-                            $"{nameof(ProcessedImageInfo.classNumber)}, " +
-                            $"{nameof(ProcessedImageInfo.className)}, " +
-                            $"{nameof(ProcessedImageInfo.leftUpperCornerX)}, " +
-                            $"{nameof(ProcessedImageInfo.leftUpperCornerY)}, " +
-                            $"{nameof(ProcessedImageInfo.width)}, " +
-                            $"{nameof(ProcessedImageInfo.height)}" });
+                            $"{nameof(ProcessedImageInfo.FileName)}, " +
+                            $"{nameof(ProcessedImageInfo.ClassNumber)}, " +
+                            $"{nameof(ProcessedImageInfo.ClassName)}, " +
+                            $"{nameof(ProcessedImageInfo.LeftUpperCornerX)}, " +
+                            $"{nameof(ProcessedImageInfo.LeftUpperCornerY)}, " +
+                            $"{nameof(ProcessedImageInfo.Width)}, " +
+                            $"{nameof(ProcessedImageInfo.Height)}" });
                 File.AppendAllLines(csvFileName, new List<string>() { item.ToString() });
                 csvFileLock.Release();
             }

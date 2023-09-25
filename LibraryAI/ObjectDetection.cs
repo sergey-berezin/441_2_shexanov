@@ -5,33 +5,46 @@ using Microsoft.ML.OnnxRuntime;
 using SixLabors.Fonts;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Threading.Tasks;
 
 namespace LibraryANN
 {
     public class ObjectDetection
     {
-        public InferenceSession session;
+        public InferenceSession? session;
         public ObjectDetection()
-        {       
-            string url = "https://storage.yandexcloud.net/dotnet4/tinyyolov2-8.onnx";
-            var onnxFileName = "tinyyolov2-8.onnx";
-            WebClient myWebClient = new WebClient();
-
-            var downloadTries = 0;
-            while (!File.Exists(onnxFileName) || new FileInfo(onnxFileName).Length == 0)
-            {
-                myWebClient.DownloadFile(url, onnxFileName);
-
-                if (downloadTries++ == 50)
-                    throw new Exception("Cannot download the artificial neural network");
-            }
-
-            session = new InferenceSession("tinyyolov2-8.onnx");
+        {
+            
         }
 
-        public Task<List<ProcessedImageInfo>> StartTaskWithGetInfo(string fileName, CancellationToken cancellationToken)
+        public void SessionInitialization()
         {
-            return Task.Factory.StartNew(() => GetInfo(fileName), cancellationToken);
+            try
+            {
+                string url = "https://storage.yandexcloud.net/dotnet4/tinyyolov2-8.onnx";
+                var onnxFileName = "tinyyolov2-8.onnx";
+                WebClient myWebClient = new WebClient();
+
+                var downloadTries = 0;
+                while (!File.Exists(onnxFileName) || new FileInfo(onnxFileName).Length == 0)
+                {
+                    myWebClient.DownloadFile(url, onnxFileName);
+
+                    if (downloadTries++ == 50)
+                        throw new Exception("Cannot download the artificial neural network");
+                }
+                session = new InferenceSession("tinyyolov2-8.onnx");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public Task<List<ProcessedImageInfo>> GetInfoAsync(string fileName, CancellationToken cancellationToken)
+        {
+            return Task.Factory.StartNew(() => GetInfo(fileName), cancellationToken, 
+                TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
         
         private List<ProcessedImageInfo> GetInfo(string fileName)
