@@ -8,8 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LibraryAI\LibraryANN.csproj" />
+    <PackageReference Include="LibraryANN" Version="1.0.0" />
   </ItemGroup>
-    
 
 </Project>

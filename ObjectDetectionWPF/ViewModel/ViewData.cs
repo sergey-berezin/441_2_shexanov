@@ -160,7 +160,7 @@ namespace ObjectDetectionWPF.ViewModel
                 //}
                 return task;
             }
-            catch (TaskCanceledException ex) 
+            catch (TaskCanceledException) 
             {
                 throw new TaskCanceledException();
             }

@@ -59,11 +59,11 @@ namespace LibraryANN
                 }
                 session = new InferenceSession("tinyyolov2-8.onnx");
             }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException)
             {
                 throw new Exception("The request failed due to a key issue such as network connectivity, DNS error, server certificate verification, or timeout.");
             }
-            catch (TaskCanceledException ex)
+            catch (TaskCanceledException)
             {
                 throw new Exception("The request failed due to a timeout.");
             }
