@@ -21,11 +21,11 @@ namespace ObjectDetectionWPF.ViewModel
         private ObjectDetection objectDetection = new ObjectDetection();
         private CancellationTokenSource tokenSource = new CancellationTokenSource();
 
-        private readonly ICommand loadFiles;
+        private readonly IAsyncCommand loadFiles;
         private readonly ICommand cancel;
         private readonly ICommand clearCollection;
         
-        public ICommand LoadFiles { get => loadFiles; }
+        public IAsyncCommand LoadFiles { get => loadFiles; }
         public ICommand Cancel { get => cancel; }
         public ICommand ClearCollection { get => clearCollection; }
 
@@ -49,15 +49,15 @@ namespace ObjectDetectionWPF.ViewModel
 
             List<string> listOfFileNames;
             
-            loadFiles = new RelayCommand(
-                _ => canLoad,
-                _ =>
+            loadFiles = new AsyncCommand(
+                () => canLoad,
+                async () =>
                 {
                     canLoad = false;
                     canCancel = true;
                     tokenSource = new CancellationTokenSource();
                     listOfFileNames = new List<string>(uiFunctions.GetFileNames());
-                    ProcessingAllFiles(listOfFileNames);
+                    await ProcessingAllFiles(listOfFileNames);
                 });
 
             cancel = new RelayCommand(
@@ -74,12 +74,6 @@ namespace ObjectDetectionWPF.ViewModel
                 _ =>
                 {
                     canLoad = false;
-                    foreach (var item in FilesNamesCollection)
-                    {
-                        item.NameOfProcessedFile = "";
-                        if (File.Exists(item.NameOfProcessedFile))
-                            File.Delete(item.NameOfProcessedFile);
-                    }
                     FilesNamesCollection.Clear();
                     canLoad = true;
                 });
