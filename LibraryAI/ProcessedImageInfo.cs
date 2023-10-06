@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LibraryANN
+﻿namespace LibraryANN
 {
     public class ProcessedImageInfo
     {
@@ -34,7 +28,34 @@ namespace LibraryANN
 
         public void SaveAsJpeg()
         {
-            DetectedObjectImage.SaveAsJpeg(FileName);
+            //var numberOfRetries = 10;
+            //var delayOnRetry = 1;
+
+            //var currentTry = 0;
+            //while (currentTry < numberOfRetries)
+            //{
+            //    try
+            //    {
+            //        DetectedObjectImage.SaveAsJpeg(FileName);
+            //        break;
+            //    }
+            //    catch (IOException)
+            //    {
+            //        Thread.Sleep(delayOnRetry);
+            //        currentTry++;
+            //        continue;
+            //    }
+            //}
+
+            try
+            {
+                DetectedObjectImage.SaveAsJpeg(FileName);
+            }
+            catch (IOException)
+            {
+                
+            }
+
         }
 
         public override string ToString()

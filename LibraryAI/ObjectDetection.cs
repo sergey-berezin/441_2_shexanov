@@ -29,7 +29,6 @@ namespace LibraryANN
                 while (!File.Exists(onnxFileName) || new FileInfo(onnxFileName).Length == 0)
                 {
                     myWebClient.DownloadFile(url, onnxFileName);
-
                     if (downloadTries++ == 50)
                         throw new Exception("Cannot download the artificial neural network");
                 }
@@ -39,6 +38,40 @@ namespace LibraryANN
             {
                 throw new Exception(ex.Message);
             }
+        }
+
+        public async Task SessionInitializationAsync()
+        {
+            try
+            {
+                string url = "https://storage.yandexcloud.net/dotnet4/tinyyolov2-8.onnx";
+                var onnxFileName = "tinyyolov2-8.onnx";
+                HttpClient myHttpClient = new HttpClient();
+
+                var downloadTries = 0;
+                while (!File.Exists(onnxFileName) || new FileInfo(onnxFileName).Length == 0)
+                {
+                    byte[] tinyyolo = await myHttpClient.GetByteArrayAsync(url);
+                    File.WriteAllBytes(onnxFileName, tinyyolo);
+
+                    if (downloadTries++ == 50)
+                        throw new Exception("Cannot download the artificial neural network");
+                }
+                session = new InferenceSession("tinyyolov2-8.onnx");
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new Exception("The request failed due to a key issue such as network connectivity, DNS error, server certificate verification, or timeout.");
+            }
+            catch (TaskCanceledException ex)
+            {
+                throw new Exception("The request failed due to a timeout.");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+
         }
 
         public Task<List<ProcessedImageInfo>> GetInfoAsync(string fileName, CancellationToken cancellationToken)
@@ -200,22 +233,67 @@ namespace LibraryANN
 
             var result = new List<ProcessedImageInfo>();
 
+            var nearlyFinal = resized.Clone();
+            Annotate(nearlyFinal, objects, labels);
+            
+            var cropedImage = RemoveBlackStripes(nearlyFinal);
+            
+            var resultFileName = fileName.Split('\\').Last().Split('.').First() + "Final.jpg";
+
             var objectCount = 0;
             foreach (var obj in objects)
             {
-                var final = resized.Clone();
-                AnnotateObject(final, obj, labels);
-
-                var resultFileName = fileName.Split('\\').Last().Split('.').First() + 
-                    $"{labels[obj.Class]}" + $"{objectCount}" + "Final.jpg";     
-                
                 result.Add(new ProcessedImageInfo(resultFileName, obj.Class,
                     labels[obj.Class], obj.XMin, obj.YMin,
-                    obj.XMax - obj.XMin, obj.YMax - obj.YMin, final));    
+                    obj.XMax - obj.XMin, obj.YMax - obj.YMin, cropedImage));    
                 objectCount++;
             }
             Console.WriteLine($"Ended {fileName}");
             return result;
+        }
+
+        private Image<Rgb24> RemoveBlackStripes(Image<Rgb24> image)
+        {
+            var isBlackStripeTop = true;
+            int lastBlackStripeTop = 0;
+
+            var isBlackStripeLeft = true;
+            int lastBlackStripeLeft = 0;
+            for (int i = 0; i < image.Width; i++)
+            {
+                for (int j = 0; j < image.Height; j++)
+                {
+                    if (!(image[j, i].R == 0 && image[j, i].G == 0 && image[j, i].B == 0))
+                    {
+                        isBlackStripeTop = false;
+                        lastBlackStripeTop = i;
+                        break;
+                    }
+                }
+                if (!isBlackStripeTop)
+                    break;
+            }
+
+            for (int i = 0; i < image.Width; i++)
+            {
+                for (int j = 0; j < image.Height; j++)
+                {
+                    if (!(image[i, j].R == 0 && image[i, j].G == 0 && image[i, j].B == 0))
+                    {
+                        isBlackStripeLeft = false;
+                        lastBlackStripeLeft = i;
+                        break;
+                    }
+                }
+                if (!isBlackStripeLeft)
+                    break;
+            }
+            
+            var croped = image.Clone(x =>
+            {
+                x.Crop(new Rectangle(lastBlackStripeLeft, lastBlackStripeTop, image.Width - 2 * lastBlackStripeLeft, image.Height - 2 * lastBlackStripeTop));
+            });
+            return croped;
         }
 
         private float Sigmoid(float value)
@@ -257,9 +335,9 @@ namespace LibraryANN
 
                     ctx.DrawText(
                         $"{labels[objbox.Class]}",
-                        SystemFonts.Families.First().CreateFont(16),
+                        SystemFonts.Families.First().CreateFont(16), 
                         Color.Blue,
-                        new PointF((float)objbox.XMin, (float)objbox.YMax));
+                        new PointF((float)objbox.XMin + 2, (float)objbox.YMax - 15));
                 });
             }
         }

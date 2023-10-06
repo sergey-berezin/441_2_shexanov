@@ -14,8 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="LibraryANN" Version="1.0.0" />
+    <ProjectReference Include="..\LibraryAI\LibraryANN.csproj" />
   </ItemGroup>
-
-
 </Project>
