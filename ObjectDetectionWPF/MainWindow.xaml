@@ -41,7 +41,7 @@
 
         <Image Grid.Column="1" Grid.Row="1" Name ="SelectedImage" Margin="20,20,20,82">
             <Image.Source>
-                <Binding ElementName="ListBoxImageAndName" Path="SelectedItem.NameOfProcessedFile"/>
+                <Binding ElementName="ListBoxImageAndName" Path="SelectedItem.ImageSource"/>
             </Image.Source>
         </Image>
 

@@ -1,17 +1,17 @@
-﻿using LibraryANN;
+﻿
+using LibraryANN;
 using SixLabors.Fonts;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Input;
 
 namespace ObjectDetectionWPF.ViewModel
@@ -31,6 +31,8 @@ namespace ObjectDetectionWPF.ViewModel
 
         private readonly IUIFunctions uiFunctions;
         private readonly IExceptionNotifier exceptionNotifier;
+
+        //public ImageSource a;
 
         public ObservableCollection<ChoosenImageInfo> FilesNamesCollection { get; set; }
 
@@ -124,9 +126,12 @@ namespace ObjectDetectionWPF.ViewModel
             try
             {
                 var task = await objectDetection.GetInfoAsync(fileName, tokenSource.Token);
+
+                //var processedImage = new ImageSharpImageSource<Rgb24>(task.FirstOrDefault().DetectedObjectImage);
+
                 if (task.Count != 0)
                 {
-                    task.FirstOrDefault().SaveAsJpeg();
+                    //task.FirstOrDefault().SaveAsJpeg();
 
                     var listOfClassNames = new List<string>();
                     foreach (var item in task)
@@ -137,8 +142,12 @@ namespace ObjectDetectionWPF.ViewModel
 
                     IComparer<ChoosenImageInfo> comparer = new ChoosenImageInfoComparer();
 
+                    
+                    var image = GetImageSourceWithAllObjects(task);
+                    image.RemoveBlackStripes();
+                    
                     var choosenImageInfo = new ChoosenImageInfo(fileName, fileName.Split('\\').Last(),
-                        Directory.GetCurrentDirectory() + "\\" + task.FirstOrDefault().FileName, listOfClassNames);
+                        Directory.GetCurrentDirectory() + "\\" + task.FirstOrDefault().FileName, listOfClassNames, image);
 
                     var index = listOfFilesNames.BinarySearch(choosenImageInfo, comparer);
 
@@ -146,7 +155,6 @@ namespace ObjectDetectionWPF.ViewModel
                     {
                         FilesNamesCollection.Insert(~index, choosenImageInfo);
                     }
-                    //var sortedList = FilesNamesCollection.OrderByDescending(x => x.ClassNames.Count).ThenBy(x => x.ShortName).ToList();
                 }
                 //else
                 //{
@@ -162,6 +170,50 @@ namespace ObjectDetectionWPF.ViewModel
             {
                 throw new Exception(ex.Message);
             }
+        }
+
+        
+
+        private ImageSharpImageSource<Rgb24> GetImageSourceWithAllObjects(List<ProcessedImageInfo> processedImageInfo)
+        {
+            var firstImageInfo = processedImageInfo.FirstOrDefault();
+            var imageWithAllObjects = firstImageInfo.DetectedObjectImage;
+            if (processedImageInfo.Count == 1)
+            {
+                return new ImageSharpImageSource<Rgb24>(imageWithAllObjects);
+            }
+            else
+            {
+                for (int i = 1; i < processedImageInfo.Count; i++) 
+                {
+                    AnnotateObject(imageWithAllObjects, processedImageInfo[i].LeftUpperCornerX, processedImageInfo[i].LeftUpperCornerY,
+                        processedImageInfo[i].LeftUpperCornerX + processedImageInfo[i].Width,
+                        processedImageInfo[i].LeftUpperCornerY + processedImageInfo[i].Height,
+                        processedImageInfo[i].ClassName);
+                }
+                return new ImageSharpImageSource<Rgb24>(imageWithAllObjects);
+            }
+        }
+
+        private void AnnotateObject(Image<Rgb24> target, double XMin, double YMin, double XMax, double YMax, string label)
+        {
+            target.Mutate(ctx =>
+            {
+                ctx.DrawPolygon(
+                    Pens.Solid(SixLabors.ImageSharp.Color.Blue, 2),
+                    new PointF[] {
+                                new PointF((float)XMin, (float)YMin),
+                                new PointF((float)XMin,(float)YMax),
+                                new PointF((float)XMax,(float)YMax),
+                                new PointF((float)XMax,(float)YMin)
+                    });
+
+                ctx.DrawText(
+                    $"{label}",
+                    SystemFonts.Families.First().CreateFont(16),
+                    SixLabors.ImageSharp.Color.Blue,
+                    new PointF((float)XMin + 2, (float)YMax - 15));
+            });
         }
     }
 }
