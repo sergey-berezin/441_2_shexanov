@@ -1,7 +1,8 @@
 {
   "profiles": {
     "ImageANN": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "car.jpg"
     }
   }
 }

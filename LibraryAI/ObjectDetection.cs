@@ -11,6 +11,8 @@ namespace LibraryANN
 {
     public class ObjectDetection
     {
+
+        
         public InferenceSession? session;
         public ObjectDetection()
         {
@@ -29,7 +31,6 @@ namespace LibraryANN
                 while (!File.Exists(onnxFileName) || new FileInfo(onnxFileName).Length == 0)
                 {
                     myWebClient.DownloadFile(url, onnxFileName);
-
                     if (downloadTries++ == 50)
                         throw new Exception("Cannot download the artificial neural network");
                 }
@@ -39,6 +40,40 @@ namespace LibraryANN
             {
                 throw new Exception(ex.Message);
             }
+        }
+
+        public async Task SessionInitializationAsync()
+        {
+            try
+            {
+                string url = "https://storage.yandexcloud.net/dotnet4/tinyyolov2-8.onnx";
+                var onnxFileName = "tinyyolov2-8.onnx";
+                HttpClient myHttpClient = new HttpClient();
+
+                var downloadTries = 0;
+                while (!File.Exists(onnxFileName) || new FileInfo(onnxFileName).Length == 0)
+                {
+                    byte[] tinyyolo = await myHttpClient.GetByteArrayAsync(url);
+                    File.WriteAllBytes(onnxFileName, tinyyolo);
+
+                    if (downloadTries++ == 50)
+                        throw new Exception("Cannot download the artificial neural network");
+                }
+                session = new InferenceSession("tinyyolov2-8.onnx");
+            }
+            catch (HttpRequestException)
+            {
+                throw new Exception("The request failed due to a key issue such as network connectivity, DNS error, server certificate verification, or timeout.");
+            }
+            catch (TaskCanceledException)
+            {
+                throw new Exception("The request failed due to a timeout.");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+
         }
 
         public Task<List<ProcessedImageInfo>> GetInfoAsync(string fileName, CancellationToken cancellationToken)
@@ -200,22 +235,41 @@ namespace LibraryANN
 
             var result = new List<ProcessedImageInfo>();
 
+            //var nearlyFinal = resized.Clone();
+            //Annotate(nearlyFinal, objects, labels);
+
+            ////var cropedImage = RemoveBlackStripes(nearlyFinal);
+
+            //var resultFileName = fileName.Split('\\').Last().Split('.').First() + "Final.jpg";
+
+            //var objectCount = 0;
+            //foreach (var obj in objects)
+            //{
+            //    result.Add(new ProcessedImageInfo(resultFileName, obj.Class,
+            //        labels[obj.Class], obj.XMin, obj.YMin,
+            //        obj.XMax - obj.XMin, obj.YMax - obj.YMin, nearlyFinal));    
+            //    objectCount++;
+            //}
+            //Console.WriteLine($"Ended {fileName}");
+            //return result;
+
             var objectCount = 0;
             foreach (var obj in objects)
             {
                 var final = resized.Clone();
                 AnnotateObject(final, obj, labels);
 
-                var resultFileName = fileName.Split('\\').Last().Split('.').First() + 
-                    $"{labels[obj.Class]}" + $"{objectCount}" + "Final.jpg";     
-                
+                var resultFileName = fileName.Split('\\').Last().Split('.').First() +
+                    $"{labels[obj.Class]}" + $"{objectCount}" + "Final.jpg";
+
                 result.Add(new ProcessedImageInfo(resultFileName, obj.Class,
                     labels[obj.Class], obj.XMin, obj.YMin,
-                    obj.XMax - obj.XMin, obj.YMax - obj.YMin, final));    
+                    obj.XMax - obj.XMin, obj.YMax - obj.YMin, final));
                 objectCount++;
             }
             Console.WriteLine($"Ended {fileName}");
             return result;
+
         }
 
         private float Sigmoid(float value)
@@ -257,9 +311,9 @@ namespace LibraryANN
 
                     ctx.DrawText(
                         $"{labels[objbox.Class]}",
-                        SystemFonts.Families.First().CreateFont(16),
+                        SystemFonts.Families.First().CreateFont(16), 
                         Color.Blue,
-                        new PointF((float)objbox.XMin, (float)objbox.YMax));
+                        new PointF((float)objbox.XMin + 2, (float)objbox.YMax - 15));
                 });
             }
         }
@@ -281,7 +335,7 @@ namespace LibraryANN
                     $"{labels[obj.Class]}",
                     SystemFonts.Families.First().CreateFont(16),
                     Color.Blue,
-                    new PointF((float)obj.XMin, (float)obj.YMax));
+                    new PointF((float)obj.XMin + 2, (float)obj.YMax - 15));
             });
         }
     }

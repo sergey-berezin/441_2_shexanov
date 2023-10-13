@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LibraryANN
+﻿namespace LibraryANN
 {
     public class ProcessedImageInfo
     {
@@ -34,7 +28,15 @@ namespace LibraryANN
 
         public void SaveAsJpeg()
         {
-            DetectedObjectImage.SaveAsJpeg(FileName);
+            try
+            {
+                DetectedObjectImage.SaveAsJpeg(FileName);
+            }
+            catch (IOException)
+            {
+                
+            }
+
         }
 
         public override string ToString()
