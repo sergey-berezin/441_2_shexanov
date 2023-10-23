@@ -66,7 +66,9 @@ namespace ObjectDetectionWPF.ViewModel
                 () => ImagesInfoCollection.Count > 0,
                 async () =>
                 {
+                    canLoad = false;
                     await dataBaseContext.TruncateAllTables();
+                    canLoad = true;
                 });
 
 
