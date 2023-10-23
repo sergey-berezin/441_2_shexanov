@@ -62,7 +62,6 @@ namespace ObjectDetectionWPF.ViewModel.Data
         {
             await this.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"ClassNames\" CASCADE");
             await this.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Images\" CASCADE");
-            await this.SaveChangesAsync();
         }
         public async Task<ImageDbContent> GetImageByNameAsync(string name, CancellationTokenSource tokenSource)
         {
