@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace ObjectDetectionWPF.ViewModel
 {
+
     public interface IAsyncCommand : ICommand
     {
         Task ExecuteAsync();
@@ -15,7 +19,11 @@ namespace ObjectDetectionWPF.ViewModel
 
     public class AsyncCommand : IAsyncCommand
     {
-        public event EventHandler CanExecuteChanged;
+        public event EventHandler CanExecuteChanged
+                {
+        add => CommandManager.RequerySuggested += value;
+        remove => CommandManager.RequerySuggested -= value;
+    }
 
         private bool _isExecuting;
         private readonly Func<Task> _execute;
@@ -49,12 +57,12 @@ namespace ObjectDetectionWPF.ViewModel
                 }
             }
 
-            RaiseCanExecuteChanged();
+            //RaiseCanExecuteChanged();
         }
 
         public void RaiseCanExecuteChanged()
         {
-            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+            //CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
 
         #region Explicit implementations
