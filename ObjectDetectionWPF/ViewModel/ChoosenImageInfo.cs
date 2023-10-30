@@ -11,21 +11,26 @@ namespace ObjectDetectionWPF.ViewModel
 {
     public class ChoosenImageInfo
     {
-        public string FullName { get; set; }
+        //public string FullName { get; set; }
         public string ShortName { get; set; }
-        public string NameOfProcessedFile { get; set; }
-        //public Image<Rgb> Image { get; set; }
-        public ImageSharpImageSource<Rgb24> ImageSource { get; set; }
+        //public string NameOfProcessedFile { get; set; }
+        
+        public ImageSharpImageSource<Rgb24> LoadedImageSource { get; set; }
+        public ImageSharpImageSource<Rgb24> ImageWithObjectsSource { get; set; }
 
         public List<string> ClassNames { get; set; }
 
-        public ChoosenImageInfo(string fullName, string shortname, string nameOfProcessedFile, List<string> classNames, ImageSharpImageSource<Rgb24> imageSource)
+        public ChoosenImageInfo(string shortname, 
+            List<string> classNames,
+            ImageSharpImageSource<Rgb24> loadedImage,
+            ImageSharpImageSource<Rgb24> imageWithObjects)
         {
-            FullName = fullName;
+            //FullName = fullName;
             ShortName = shortname;
-            NameOfProcessedFile = nameOfProcessedFile;
+            //NameOfProcessedFile = nameOfProcessedFile;
             ClassNames = classNames;
-            ImageSource = imageSource;
+            LoadedImageSource = loadedImage;
+            ImageWithObjectsSource = imageWithObjects;
         }
     }
 }

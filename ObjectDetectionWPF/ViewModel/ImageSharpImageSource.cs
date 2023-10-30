@@ -1,9 +1,16 @@
 ﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Advanced;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
@@ -21,6 +28,38 @@ namespace ObjectDetectionWPF.ViewModel
     {
         private Image<TPixel> source;
 
+        public byte[] ToByteArray()
+        {
+
+            var encoder = new JpegEncoder();
+            using (MemoryStream ms = new MemoryStream())
+            {
+                encoder.Encode(source, ms);
+                return ms.ToArray();
+            }
+            
+            //return MemoryMarshal.AsBytes(source.GetPixelMemoryGroup().ToArray()[0].Span).ToArray();
+            
+            //var a = new MemoryStream();
+            //source.Save(a, );
+            //return a.ToArray();
+
+            //var a = new BinaryReader(source);
+            //var a = new List<byte>();
+            //for (int i = 0; i < source.Width; i++)
+            //{
+            //    for (int j = 0; j < source.Height; j++)
+            //    {
+            //        var currentPixel = new Rgba32();
+            //        source[i, j].ToRgba32(ref currentPixel);
+            //        a.Add(currentPixel.R);
+            //        a.Add(currentPixel.G);
+            //        a.Add(currentPixel.B);
+            //    }
+            //}
+            //return a.ToArray();
+
+        }
         public void RemoveBlackStripes()
         {
 

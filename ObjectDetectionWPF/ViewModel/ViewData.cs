@@ -1,8 +1,13 @@
 ﻿
 using LibraryANN;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using ObjectDetectionWPF.ViewModel.Data;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System;
@@ -24,17 +29,21 @@ namespace ObjectDetectionWPF.ViewModel
         private readonly IAsyncCommand loadFiles;
         private readonly ICommand cancel;
         private readonly ICommand clearCollection;
+        private readonly IAsyncCommand clearDb;
+        private readonly IAsyncCommand loadImagesFromDb;
         
         public IAsyncCommand LoadFiles { get => loadFiles; }
+        public IAsyncCommand ClearDb { get => clearDb; }
         public ICommand Cancel { get => cancel; }
         public ICommand ClearCollection { get => clearCollection; }
+        public IAsyncCommand LoadImagesFromDb { get => loadImagesFromDb; }
 
         private readonly IUIFunctions uiFunctions;
         private readonly IExceptionNotifier exceptionNotifier;
 
-        //public ImageSource a;
+        public ObservableCollection<ChoosenImageInfo> ImagesInfoCollection { get; set; }
 
-        public ObservableCollection<ChoosenImageInfo> FilesNamesCollection { get; set; }
+        private ProcessedImagesDBContext dataBaseContext = new ProcessedImagesDBContext();
 
         private bool canLoad;
         private bool canCancel;
@@ -44,13 +53,35 @@ namespace ObjectDetectionWPF.ViewModel
             uiFunctions = _uiFunctions;
             exceptionNotifier = _exceptionNotifier;
 
+            //MainWindow.Init(this);
+
             canLoad = false;
             canCancel = false;
 
-            FilesNamesCollection = new ObservableCollection<ChoosenImageInfo>();
+            ImagesInfoCollection = new ObservableCollection<ChoosenImageInfo>();
 
             List<string> listOfFileNames;
-            
+
+            clearDb = new AsyncCommand(
+                () => ImagesInfoCollection.Count > 0,
+                async () =>
+                {
+                    canLoad = false;
+                    await dataBaseContext.TruncateAllTables();
+                    canLoad = true;
+                });
+
+
+             loadImagesFromDb = new AsyncCommand(
+                () => canLoad,
+                async () =>
+                {
+                    canLoad = false;
+                    canCancel = true;
+                    tokenSource = new CancellationTokenSource();
+                    await LoadAllImagesFromDataBaseAsync(tokenSource);
+                });
+
             loadFiles = new AsyncCommand(
                 () => canLoad,
                 async () =>
@@ -72,13 +103,13 @@ namespace ObjectDetectionWPF.ViewModel
                 });
 
             clearCollection = new RelayCommand(
-                _ => FilesNamesCollection.Count > 0,
+                _ => ImagesInfoCollection.Count > 0,
                 _ =>
                 {
                     canLoad = false;
-                    FilesNamesCollection.Clear();
+                    ImagesInfoCollection.Clear();
                     canLoad = true;
-                });
+                });           
         }
 
         public async Task SessionInitialization()
@@ -95,14 +126,42 @@ namespace ObjectDetectionWPF.ViewModel
 
         }
 
+        public async Task LoadAllImagesFromDataBaseAsync(CancellationTokenSource tokenSource)
+        {
+            var listOfImagesFromDb = await dataBaseContext.GetAllImages(tokenSource);
+            
+            foreach (var item in listOfImagesFromDb)
+            {
+                InsertInAGivenOrder(DbContenetToChoosenImageInfo(item));
+            }
+            canLoad = true;
+            canCancel = false;
+        }
+
         private async Task ProcessingAllFiles(List<string> listOfFileNames)
         {
             try
             {
                 foreach (var fileName in listOfFileNames)
                 {
-                    if (!FilesNamesCollection.Any(x => x.FullName == fileName))
+                    var shortName = fileName.Split("\\").Last();
+                    var imageDbContent = await dataBaseContext.GetImageByNameAsync(shortName, tokenSource);
+                    if (imageDbContent != null)
+                    {
+                        InsertInAGivenOrder(DbContenetToChoosenImageInfo(imageDbContent));
+                    }
+                    if (!ImagesInfoCollection.Any(x => x.ShortName == shortName))
+                    {
                         await ProcessFileAsync(fileName, tokenSource);
+                    }
+                    /*if (await dataBaseContext.IsContainImageWithNameAsync(shortName))
+                    {
+                         
+                         InsertInAGivenOrder(DbContenetToChoosenImageInfo(imageDbContent));
+                    }
+                    if (!ImagesInfoCollection.Any(x => x.ShortName == shortName))
+                        //&& !fileNamesFromDataBase.Any(x => x == fileName.Split('\\').Last())) // сделать побайтовое сравнение
+                        await ProcessFileAsync(fileName, tokenSource);*/
                 }
                 canLoad = true;
                 canCancel = false;
@@ -137,23 +196,31 @@ namespace ObjectDetectionWPF.ViewModel
                     foreach (var item in task)
                     {
                         listOfClassNames.Add(item.ClassName);
-                    }
-                    var listOfFilesNames = FilesNamesCollection.ToList();
-
-                    IComparer<ChoosenImageInfo> comparer = new ChoosenImageInfoComparer();
-
+                    }                  
                     
-                    var image = GetImageSourceWithAllObjects(task);
-                    image.RemoveBlackStripes();
+                    var imageWithObjects = GetImageSourceWithAllObjects(task);
+                    imageWithObjects.RemoveBlackStripes();
+
+                    var loadedImage = new ImageSharpImageSource<Rgb24>(Image.Load<Rgb24>(fileName));
                     
-                    var choosenImageInfo = new ChoosenImageInfo(fileName, fileName.Split('\\').Last(),
-                        Directory.GetCurrentDirectory() + "\\" + task.FirstOrDefault().FileName, listOfClassNames, image);
+                    var choosenImageInfo = new ChoosenImageInfo(
+                        fileName.Split('\\').Last(),
+                        listOfClassNames,
+                        loadedImage, 
+                        imageWithObjects);
 
-                    var index = listOfFilesNames.BinarySearch(choosenImageInfo, comparer);
+                    //var listOfFilesNames = ImagesInfoCollection.ToList();
+                    //IComparer<ChoosenImageInfo> comparer = new ChoosenImageInfoComparer();
+                    //var index = listOfFilesNames.BinarySearch(choosenImageInfo, comparer);
+                    //if (index < 0)
+                    //{
+                    //    ImagesInfoCollection.Insert(~index, choosenImageInfo);
+                    //}
+                    InsertInAGivenOrder(choosenImageInfo);
 
-                    if (index < 0)
+                    if (!await dataBaseContext.AddProcessedImage(choosenImageInfo))
                     {
-                        FilesNamesCollection.Insert(~index, choosenImageInfo);
+                        throw new Exception("Error in adding to database");
                     }
                 }
                 //else
@@ -172,7 +239,37 @@ namespace ObjectDetectionWPF.ViewModel
             }
         }
 
-        
+        private ChoosenImageInfo DbContenetToChoosenImageInfo(ImageDbContent imageDbContent)
+        {
+            Image<Rgb24> loadedImage;
+            using (MemoryStream ms = new MemoryStream(imageDbContent.LoadedImage))
+            {
+                loadedImage = Image.Load<Rgb24>(ms);
+            }
+
+            Image<Rgb24> imageWithObjects;
+            using (MemoryStream ms = new MemoryStream(imageDbContent.ImageWithObjects))
+            {
+                imageWithObjects = Image.Load<Rgb24>(ms);
+            }
+
+            return new ChoosenImageInfo(
+                imageDbContent.Name,
+                imageDbContent.ClassNames,
+                new ImageSharpImageSource<Rgb24>(loadedImage),
+                new ImageSharpImageSource<Rgb24>(imageWithObjects));
+        }
+
+        private void InsertInAGivenOrder(ChoosenImageInfo choosenImageInfo)
+        {
+            var listOfFilesNames = ImagesInfoCollection.ToList();
+            IComparer<ChoosenImageInfo> comparer = new ChoosenImageInfoComparer();
+            var index = listOfFilesNames.BinarySearch(choosenImageInfo, comparer);
+            if (index < 0)
+            {
+                ImagesInfoCollection.Insert(~index, choosenImageInfo);
+            }
+        }
 
         private ImageSharpImageSource<Rgb24> GetImageSourceWithAllObjects(List<ProcessedImageInfo> processedImageInfo)
         {

@@ -31,11 +31,17 @@ namespace ObjectDetectionWPF
 
             viewData = new ViewData(appUIFunctions, exceptionNotifier);
 
-            viewData.SessionInitialization();
+            viewData.SessionInitialization();      
 
             InitializeComponent();
 
             this.DataContext = viewData;
+            
+        }
+
+        public static async Task Init(ViewData viewData)
+        {
+            await viewData.SessionInitialization();
         }
     }
 }
