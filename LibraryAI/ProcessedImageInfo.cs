@@ -9,11 +9,12 @@
         public double LeftUpperCornerY { get; }
         public double Width { get; }
         public double Height { get; }
-        public Image<Rgb24> DetectedObjectImage { get; }   
+        public double Confidence {  get; }
+        public Image<Rgb24> DetectedObjectImage { get; }
 
-        public ProcessedImageInfo(string fileName, int classNumber, 
+        public ProcessedImageInfo(string fileName, int classNumber,
             string className, double leftUpperCornerX,
-            double leftUpperCornerY, double width, double height, 
+            double leftUpperCornerY, double width, double height, double confidence, 
             Image<Rgb24> detectedObjectImage)
         {
             FileName = fileName;
@@ -23,6 +24,7 @@
             LeftUpperCornerY = leftUpperCornerY;
             Width = width;
             Height = height;
+            Confidence = confidence;
             DetectedObjectImage = detectedObjectImage;
         }
 

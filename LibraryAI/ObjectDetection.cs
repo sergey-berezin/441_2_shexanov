@@ -245,7 +245,7 @@ namespace LibraryANN
             {
                 result.Add(new ProcessedImageInfo(resultFileName, obj.Class,
                     labels[obj.Class], obj.XMin, obj.YMin,
-                    obj.XMax - obj.XMin, obj.YMax - obj.YMin, cropedImage));    
+                    obj.XMax - obj.XMin, obj.YMax - obj.YMin, obj.Confidence, cropedImage));    
                 objectCount++;
             }
             Console.WriteLine($"Ended {fileName}");
