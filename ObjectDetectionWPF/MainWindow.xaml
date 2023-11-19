@@ -10,7 +10,7 @@
     <Window.Resources>
         <DataTemplate x:Key="ImageWithNameTemplate">
             <StackPanel Orientation="Horizontal">
-                <Image Source="{Binding FullName}" Height ="100"/>
+                <Image Source="{Binding LoadedImageSource}" Height ="100"/>
                 <TextBlock Text="{Binding Path = ShortName}"/>
             </StackPanel>
         </DataTemplate>
@@ -37,23 +37,25 @@
 
 
 
-        <ListBox Name="ListBoxImageAndName" Grid.Row="1" Grid.Column="0" ItemsSource="{Binding FilesNamesCollection, UpdateSourceTrigger = PropertyChanged}" ItemTemplate="{StaticResource ImageWithNameTemplate}" />
+        <ListBox Name="ListBoxImageAndName" Grid.Row="1" Grid.Column="0" ItemsSource="{Binding ImagesInfoCollection, UpdateSourceTrigger = PropertyChanged}" ItemTemplate="{StaticResource ImageWithNameTemplate}" />
 
         <Image Grid.Column="1" Grid.Row="1" Name ="SelectedImage" Margin="20,20,20,82">
             <Image.Source>
-                <Binding ElementName="ListBoxImageAndName" Path="SelectedItem.NameOfProcessedFile"/>
+                <Binding ElementName="ListBoxImageAndName" Path="SelectedItem.ImageWithObjectsSource"/>
             </Image.Source>
         </Image>
 
         <ListBox Grid.Column="1" Grid.Row="1" ItemsSource="{Binding ElementName=ListBoxImageAndName, Path=SelectedItem.ClassNames}"  Margin="120,0,120,10" Height="40" VerticalAlignment="Bottom" Padding="0,-3,0,0"/>
 
-        <Button Command="{Binding Cancel}" Content="Cancel" HorizontalAlignment="Left" Margin="60,0,0,0" Grid.Row="2" VerticalAlignment="Center" Height="30" Width="70"/>
-        <Button Command="{Binding ClearCollection}" Content="Clear" HorizontalAlignment="Left" Margin="200,0,0,0" Grid.Row="2" VerticalAlignment="Center" Height="30" Width="70"/>
+        <Button Command="{Binding Cancel}" Content="Cancel" HorizontalAlignment="Left" Margin="50,0,0,0" Grid.Row="2" VerticalAlignment="Center" Height="30" Width="69"/>
+        <Button Command="{Binding ClearCollection}" Content="Clear" HorizontalAlignment="Center" Grid.Row="2" VerticalAlignment="Center" Height="30" Width="70"/>
+        <Button Command="{Binding ClearDb}" Content="Clear Db" HorizontalAlignment="Left" Margin="280,0,0,0" Grid.Row="2" VerticalAlignment="Center" Height="30" Width="70"/>
 
         <StackPanel Grid.Row="0" Grid.Column="0" Height="20">
             <Menu Height="20" Width="40" HorizontalAlignment="Left">
                 <MenuItem Header="File" Height="20" Width="40" HorizontalContentAlignment="Stretch">
-                    <MenuItem Command="{Binding LoadFiles}" Header="Load files"/>
+                    <MenuItem Command="{Binding LoadFiles}" Header="Load files from Fs"/>
+                    <MenuItem Command="{Binding LoadImagesFromDb}" Header="Load files from Db"/>
                 </MenuItem>
                 <!--<MenuItem Command="{Binding Cancel}" Header="Cancel" Width="50"/>-->
             </Menu>

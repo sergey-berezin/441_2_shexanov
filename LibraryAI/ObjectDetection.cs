@@ -11,6 +11,8 @@ namespace LibraryANN
 {
     public class ObjectDetection
     {
+
+        
         public InferenceSession? session;
         public ObjectDetection()
         {
@@ -233,67 +235,41 @@ namespace LibraryANN
 
             var result = new List<ProcessedImageInfo>();
 
-            var nearlyFinal = resized.Clone();
-            Annotate(nearlyFinal, objects, labels);
-            
-            var cropedImage = RemoveBlackStripes(nearlyFinal);
-            
-            var resultFileName = fileName.Split('\\').Last().Split('.').First() + "Final.jpg";
+            //var nearlyFinal = resized.Clone();
+            //Annotate(nearlyFinal, objects, labels);
+
+            ////var cropedImage = RemoveBlackStripes(nearlyFinal);
+
+            //var resultFileName = fileName.Split('\\').Last().Split('.').First() + "Final.jpg";
+
+            //var objectCount = 0;
+            //foreach (var obj in objects)
+            //{
+            //    result.Add(new ProcessedImageInfo(resultFileName, obj.Class,
+            //        labels[obj.Class], obj.XMin, obj.YMin,
+            //        obj.XMax - obj.XMin, obj.YMax - obj.YMin, nearlyFinal));    
+            //    objectCount++;
+            //}
+            //Console.WriteLine($"Ended {fileName}");
+            //return result;
 
             var objectCount = 0;
             foreach (var obj in objects)
             {
+                var final = resized.Clone();
+                AnnotateObject(final, obj, labels);
+
+                var resultFileName = fileName.Split('\\').Last().Split('.').First() +
+                    $"{labels[obj.Class]}" + $"{objectCount}" + "Final.jpg";
+
                 result.Add(new ProcessedImageInfo(resultFileName, obj.Class,
                     labels[obj.Class], obj.XMin, obj.YMin,
-                    obj.XMax - obj.XMin, obj.YMax - obj.YMin, obj.Confidence, cropedImage));    
+                    obj.XMax - obj.XMin, obj.YMax - obj.YMin, final));
                 objectCount++;
             }
             Console.WriteLine($"Ended {fileName}");
             return result;
-        }
 
-        private Image<Rgb24> RemoveBlackStripes(Image<Rgb24> image)
-        {
-            var isBlackStripeTop = true;
-            int lastBlackStripeTop = 0;
-
-            var isBlackStripeLeft = true;
-            int lastBlackStripeLeft = 0;
-            for (int i = 0; i < image.Width; i++)
-            {
-                for (int j = 0; j < image.Height; j++)
-                {
-                    if (!(image[j, i].R == 0 && image[j, i].G == 0 && image[j, i].B == 0))
-                    {
-                        isBlackStripeTop = false;
-                        lastBlackStripeTop = i;
-                        break;
-                    }
-                }
-                if (!isBlackStripeTop)
-                    break;
-            }
-
-            for (int i = 0; i < image.Width; i++)
-            {
-                for (int j = 0; j < image.Height; j++)
-                {
-                    if (!(image[i, j].R == 0 && image[i, j].G == 0 && image[i, j].B == 0))
-                    {
-                        isBlackStripeLeft = false;
-                        lastBlackStripeLeft = i;
-                        break;
-                    }
-                }
-                if (!isBlackStripeLeft)
-                    break;
-            }
-            
-            var croped = image.Clone(x =>
-            {
-                x.Crop(new Rectangle(lastBlackStripeLeft, lastBlackStripeTop, image.Width - 2 * lastBlackStripeLeft, image.Height - 2 * lastBlackStripeTop));
-            });
-            return croped;
         }
 
         private float Sigmoid(float value)
@@ -359,7 +335,7 @@ namespace LibraryANN
                     $"{labels[obj.Class]}",
                     SystemFonts.Families.First().CreateFont(16),
                     Color.Blue,
-                    new PointF((float)obj.XMin, (float)obj.YMax));
+                    new PointF((float)obj.XMin + 2, (float)obj.YMax - 15));
             });
         }
     }

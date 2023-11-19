@@ -30,25 +30,6 @@
 
         public void SaveAsJpeg()
         {
-            //var numberOfRetries = 10;
-            //var delayOnRetry = 1;
-
-            //var currentTry = 0;
-            //while (currentTry < numberOfRetries)
-            //{
-            //    try
-            //    {
-            //        DetectedObjectImage.SaveAsJpeg(FileName);
-            //        break;
-            //    }
-            //    catch (IOException)
-            //    {
-            //        Thread.Sleep(delayOnRetry);
-            //        currentTry++;
-            //        continue;
-            //    }
-            //}
-
             try
             {
                 DetectedObjectImage.SaveAsJpeg(FileName);
