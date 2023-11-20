@@ -4,6 +4,6 @@ namespace ObjectDetectionServer.Services
 {
     public interface IObjectDetectionService
     {
-        public List<ObjectImageDTO> GetAllObjects(byte[] image); 
+        public Task<List<ObjectImageDTO>> GetAllObjects(byte[] image);
     }
 }

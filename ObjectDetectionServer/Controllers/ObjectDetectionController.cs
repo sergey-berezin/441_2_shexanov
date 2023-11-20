@@ -23,23 +23,18 @@ namespace ObjectDetectionServer.Controllers
 
         [HttpPost]
         [Route("GetAllObjects")]
-        public IActionResult GetAllObjects([FromBody] byte[] image)
+        public async Task<IActionResult> GetAllObjects([FromBody] string image64Base)
         {
             try
             {
-                var imageObjects = objectDetectionService.GetAllObjects(image);
+                var image = Convert.FromBase64String(image64Base);
+                var imageObjects = await objectDetectionService.GetAllObjects(image);
                 return Ok(imageObjects);
             }
-            //catch(BarrierPostPhaseException ex) // ????????????
-            //{
-            //    logger.LogError(ex.Message, ex);
-            //    return BadRequest(ex.Message);
-            //}
             catch (Exception ex)
             {
                 logger.LogCritical(ex.Message, ex);
-                BadRequest(ex.Message);
-                throw new Exception(ex.Message, ex);
+                return StatusCode(500);
             }
         }
     }
