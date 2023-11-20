@@ -17,7 +17,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddCors(o => o.AddPolicy("Cors", builder =>
 {
     builder
-        .WithOrigins("http://127.0.0.1:5500")
+        .WithOrigins("http://127.0.0.1:5501")
         .WithHeaders("*")
         .WithMethods("*")
         .AllowCredentials();

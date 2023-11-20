@@ -25,16 +25,32 @@ namespace ObjectDetectionServer.Controllers
         [Route("GetAllObjects")]
         public async Task<IActionResult> GetAllObjects([FromBody] string image64Base)
         {
+            if (image64Base.Length == 0)
+            {
+                var message = "Empty 64base string";
+                logger.LogCritical(message);
+                return BadRequest(message);
+            }
             try
             {
                 var image = Convert.FromBase64String(image64Base);
                 var imageObjects = await objectDetectionService.GetAllObjects(image);
                 return Ok(imageObjects);
             }
+            catch (ArgumentNullException ex)
+            {
+                logger.LogCritical(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+            catch (FormatException ex)
+            {
+                logger.LogCritical(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
             catch (Exception ex)
             {
                 logger.LogCritical(ex.Message, ex);
-                return StatusCode(500);
+                return StatusCode(500, ex.Message);
             }
         }
     }

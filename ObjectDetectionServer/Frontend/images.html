@@ -3,18 +3,24 @@
 <head>
     <meta charset="utf-8" />
     <title>ObjectDetection</title>
-    <!-- <link rel="stylesheet" href="style.css"> -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <input type="file" name="upload_file" class="form-control" placeholder="Enter Name" id="upload_file">
-    <div id="preview"></div>
+    <!-- <input type="file" name="upload_file" class="form-control" placeholder="Enter Name" id="upload_file"> -->
+    
+    <form method="post" enctype="multipart/form-data">
+        <label class="input-file">
+               <input type="file" id="upload_file" name="upload_file">		
+               <span>Выберите файл</span>
+         </label>
+    </form>
 
-    <table class="main-table" id="tblImages" class="table">
+    <table class="main-table" id="tblImages">
         <thead>
             <tr>
-                <th>Image</th>
-                <th>ClassName</th>
-                <th>Confidence</th>
+                <th class = "rowName">Image</th>
+                <th class = "rowName">ClassName</th>
+                <th class = "rowName">Confidence</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -69,7 +75,7 @@
                     var imageSource = "data:image/jpeg;base64," + json[i].imageWithObject;
                     image.src = imageSource
                     //document.body.appendChild(image);
-                    var row = "<tr><td>" + "<img src = " + imageSource + " height= " + 150 +  ">"  + "</td><td>" + json[i].className + "</td><td>" + json[i].confidence + "</td><td>";
+                    var row = "<tr><td>" + "<img src = " + imageSource + " height= " + 150 +  ">"  + "</td><td>" + json[i].className + "</td><td>" + json[i].confidence.toPrecision(5); + "</td>";
                     $("#tblImages").append(row);
                 }               
             })

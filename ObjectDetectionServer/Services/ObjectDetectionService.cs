@@ -17,16 +17,6 @@ namespace ObjectDetectionServer.Services
 
         public async Task<List<ObjectImageDTO>> GetAllObjects(byte[] image) 
         {
-            //return new List<ObjectImageDto>()
-            //{
-            //    new ObjectImageDto
-            //    {
-            //        ImageWithObject = new byte[] {1, 2 ,3, 4},
-            //        ClassName = "2",
-            //        Metrics = 123,
-            //    }
-            //};
-
             var task = await objectDetection.GetInfoAsync(image, new CancellationToken());
             
             var imagesDtos = new List<ObjectImageDTO>();
