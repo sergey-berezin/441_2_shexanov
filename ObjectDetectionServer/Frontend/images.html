@@ -10,10 +10,12 @@
     
     <form method="post" enctype="multipart/form-data">
         <label class="input-file">
-               <input type="file" id="upload_file" name="upload_file">		
+               <input type="file" accept=".jpg" id="upload_file" name="upload_file">		
                <span>Выберите файл</span>
          </label>
     </form>
+
+    <div id="loading" class="loading"></div>
 
     <table class="main-table" id="tblImages">
         <thead>
@@ -31,11 +33,13 @@
 		const url = "https://localhost:44367";
                     
         var result;
+        
+        var loadingDiv = document.getElementById('loading');
 
         const fileInput = document.getElementById("upload_file");
 
         fileInput.addEventListener("change", e => {
-            //console.log(result)
+            
             const file = fileInput.files[0]
             const reader = new FileReader();
 
@@ -46,16 +50,20 @@
                     dataURL.replace('data:', '').replace(/^.+,/, '');
                 
                 var base64 = getBase64StringFromDataURL(reader.result)
-                console.log(reader.result);
+                //console.log(reader.result);
+                
                 PostBase64Image(base64);
             });
 
             reader.readAsDataURL(file);
+            
         });
         
         
         async function PostBase64Image(image)
         {
+            //debugger;
+            showSpinner();
             await fetch(url + "/api/ObjectDetection/GetAllObjects",
             {
                 method: "POST",
@@ -65,10 +73,23 @@
                 },
                 body: JSON.stringify(image),
             })
-            .then(response => response.json())
-            .then(json => {
+            .then(response => 
+            {      
+                return response.json();
+            })
+            .then(json => 
+            {
                 if (json == null)
+                {
+                    alert("Null response error");
                     return;
+                }
+                if (json.length == 0)
+                {   
+                    hideSpinner();
+                    alert("The model couldn't find any objects on the image");
+                    return;
+                }
                 for (let i = 0; i < json.length; i++)
                 {
                     var image = new Image();
@@ -79,8 +100,22 @@
                     $("#tblImages").append(row);
                 }               
             })
-            .catch(err => console.log(err));
-            
+            .catch(err =>
+            {
+                //alert(err);
+                console.log(err);
+            });
+            hideSpinner();
+        }
+
+        function showSpinner() 
+        {
+            loadingDiv.style.visibility = 'visible';
+        }
+
+        function hideSpinner() 
+        {
+            loadingDiv.style.visibility = 'hidden';
         }
 		
     </script>
